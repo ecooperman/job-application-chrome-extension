@@ -1,0 +1,115 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Job Application Autofill - Profile</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <h1>Job Application Autofill</h1>
+    <p class="hint">
+      This is your template - what gets copied into application fields. Everything is stored only in this browser
+      (<code>chrome.storage.local</code>), never sent anywhere except the optional AI drafting call to Anthropic below.
+    </p>
+
+    <section>
+      <h2>Personal info</h2>
+      <div class="grid-2">
+        <label>First name<input id="personal.firstName" type="text" /></label>
+        <label>Last name<input id="personal.lastName" type="text" /></label>
+        <label>Email<input id="personal.email" type="email" /></label>
+        <label>Phone<input id="personal.phone" type="tel" /></label>
+        <label>Address line 1<input id="personal.addressLine1" type="text" /></label>
+        <label>Address line 2<input id="personal.addressLine2" type="text" /></label>
+        <label>City<input id="personal.city" type="text" /></label>
+        <label>State / province<input id="personal.state" type="text" /></label>
+        <label>ZIP / postal code<input id="personal.zip" type="text" /></label>
+        <label>Country<input id="personal.country" type="text" /></label>
+        <label>LinkedIn URL<input id="personal.linkedinUrl" type="url" /></label>
+        <label>GitHub URL<input id="personal.githubUrl" type="url" /></label>
+        <label>Portfolio URL<input id="personal.portfolioUrl" type="url" /></label>
+        <label>Website URL<input id="personal.websiteUrl" type="url" /></label>
+      </div>
+    </section>
+
+    <section>
+      <h2>Work authorization</h2>
+      <p class="hint">Answered with a word or short phrase - matching is fuzzy, so "Yes" or "No" works fine.</p>
+      <div class="grid-2">
+        <label>Authorized to work in the US?<input id="workAuth.authorizedToWorkUS" type="text" placeholder="Yes" /></label>
+        <label>Require visa sponsorship?<input id="workAuth.requireSponsorship" type="text" placeholder="No" /></label>
+        <label>Visa status (if applicable)<input id="workAuth.visaStatus" type="text" /></label>
+      </div>
+    </section>
+
+    <section>
+      <h2>Voluntary self-identification (EEO)</h2>
+      <p class="hint">Optional. Leave blank to skip these fields on forms rather than guessing.</p>
+      <div class="grid-2">
+        <label>Gender<input id="eeo.gender" type="text" /></label>
+        <label>Race / ethnicity<input id="eeo.race" type="text" /></label>
+        <label>Hispanic or Latino?<input id="eeo.hispanicOrLatino" type="text" /></label>
+        <label>Veteran status<input id="eeo.veteranStatus" type="text" /></label>
+        <label>Disability status<input id="eeo.disabilityStatus" type="text" /></label>
+      </div>
+    </section>
+
+    <section>
+      <h2>Preferences</h2>
+      <div class="grid-2">
+        <label>Desired salary<input id="preferences.desiredSalary" type="text" /></label>
+        <label>Notice period<input id="preferences.noticePeriod" type="text" /></label>
+        <label>Earliest start date<input id="preferences.earliestStartDate" type="text" /></label>
+        <label>Willing to relocate?<input id="preferences.willingToRelocate" type="text" /></label>
+        <label>Remote / hybrid / onsite preference<input id="preferences.remotePreference" type="text" /></label>
+      </div>
+    </section>
+
+    <section>
+      <h2>Work history</h2>
+      <p class="hint">Used to give the AI fallback real context when it drafts answers to custom questions.</p>
+      <div id="work-history-list"></div>
+      <button type="button" id="add-work-history" class="secondary-btn">+ Add job</button>
+    </section>
+
+    <section>
+      <h2>Education</h2>
+      <div id="education-list"></div>
+      <button type="button" id="add-education" class="secondary-btn">+ Add school</button>
+    </section>
+
+    <section>
+      <h2>Snippet bank</h2>
+      <p class="hint">
+        Pre-written answers for common custom questions (e.g. "why this company", "greatest strength", "tell us about
+        a challenge"). If a question's text contains most of a snippet's keywords, that answer is used instead of
+        calling the AI.
+      </p>
+      <div id="snippet-list"></div>
+      <button type="button" id="add-snippet" class="secondary-btn">+ Add snippet</button>
+    </section>
+
+    <section>
+      <h2>AI fallback</h2>
+      <p class="hint">
+        When a custom question doesn't match any snippet above, optionally have Claude draft an answer from your work
+        history and education (still inserted for you to review, never auto-submitted). Get a key at
+        <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com/settings/keys</a>.
+      </p>
+      <label class="checkbox-inline">
+        <input id="settings.llmFallbackEnabled" type="checkbox" />
+        Enable AI-drafted answers for unmatched questions
+      </label>
+      <label>Anthropic API key<input id="settings.anthropicApiKey" type="password" placeholder="sk-ant-..." /></label>
+    </section>
+
+    <div class="save-bar">
+      <button type="button" id="save-btn">Save profile</button>
+      <span id="save-status" class="status"></span>
+    </div>
+
+    <script src="../lib/profileSchema.js"></script>
+    <script src="../lib/storage.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>

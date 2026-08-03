@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Job Application Autofill",
+  "version": "0.1.0",
+  "description": "Fills job application forms from your saved profile. Never submits anything for you.",
+  "permissions": ["storage", "activeTab", "scripting"],
+  "host_permissions": ["https://api.anthropic.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup/popup.html"
+  },
+  "options_page": "options/options.html"
+}
