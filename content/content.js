@@ -1,41 +1,10 @@
 // Entry point injected by popup.js. Runs the fill pass and shows an
 // on-page summary banner (not the popup, which Chrome can tear down
 // before an in-flight AI call finishes).
-
-function escapeHtml(s) {
-  const div = document.createElement("div");
-  div.textContent = String(s);
-  return div.innerHTML;
-}
-
-function closeButtonHtml() {
-  return '<button id="jobfill-banner-close" style="position:absolute;top:8px;right:10px;background:none;border:none;color:#9ca3af;font-size:16px;cursor:pointer;line-height:1;">×</button>';
-}
-
-function wireCloseButton() {
-  const btn = document.getElementById("jobfill-banner-close");
-  if (btn) {
-    btn.addEventListener("click", () => {
-      const banner = document.getElementById("jobfill-summary-banner");
-      if (banner) banner.remove();
-    });
-  }
-}
-
-function showBanner(html) {
-  let banner = document.getElementById("jobfill-summary-banner");
-  if (!banner) {
-    banner = document.createElement("div");
-    banner.id = "jobfill-summary-banner";
-    banner.style.cssText =
-      "position:fixed;bottom:16px;right:16px;z-index:2147483647;max-width:320px;" +
-      'background:#111827;color:#f9fafb;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;' +
-      "font-size:13px;line-height:1.5;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,0.35);" +
-      "padding:14px 16px;position:fixed;";
-    document.body.appendChild(banner);
-  }
-  banner.innerHTML = html;
-}
+//
+// escapeHtml/closeButtonHtml/wireCloseButton/showBanner live in
+// lib/banner.js, shared with the score entry points - popup.js injects it
+// before this file.
 
 function renderSummaryBanner(summary) {
   if (summary.error) {

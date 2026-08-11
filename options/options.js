@@ -1,5 +1,5 @@
 const SIMPLE_FIELD_IDS = [
-  "personal.firstName", "personal.lastName", "personal.email", "personal.phone",
+  "personal.firstName", "personal.lastName", "personal.currentTitle", "personal.email", "personal.phone",
   "personal.addressLine1", "personal.addressLine2", "personal.city", "personal.state",
   "personal.zip", "personal.country", "personal.linkedinUrl", "personal.githubUrl",
   "personal.portfolioUrl", "personal.websiteUrl",
@@ -118,7 +118,9 @@ function renderSnippetBank() {
   currentProfile.snippetBank.forEach((snippet, i) => {
     const row = document.createElement("div");
     row.className = "list-row";
+    const sourceTag = snippet.source === "resume-import" ? '<div class="snippet-source-tag">From resume import</div>' : "";
     row.innerHTML = `
+      ${sourceTag}
       <input type="text" placeholder="Keywords, comma-separated (e.g. why, interested, company)"
              data-field="keywords" value="${escapeAttr((snippet.keywords || []).join(", "))}">
       <textarea placeholder="Answer to insert when matched" data-field="answer" rows="3">${escapeHtml(snippet.answer)}</textarea>
@@ -141,12 +143,50 @@ function renderSnippetBank() {
   });
 }
 
+async function refreshScoreCount() {
+  const entries = await listCachedScores();
+  document.getElementById("score-count").textContent = String(entries.length);
+  document.getElementById("score-count-plural").textContent = entries.length === 1 ? "" : "s";
+  return entries;
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   currentProfile = await loadProfile();
   populateSimpleFields();
   renderWorkHistory();
   renderEducation();
   renderSnippetBank();
+  refreshScoreCount();
+
+  document.getElementById("export-csv-btn").addEventListener("click", async () => {
+    const exportStatus = document.getElementById("export-status");
+    exportStatus.textContent = "";
+    try {
+      const entries = await refreshScoreCount();
+      if (!entries.length) {
+        exportStatus.textContent = "No scored jobs yet.";
+        return;
+      }
+      const csv = scoresToCsv(entries);
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `scored-jobs-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      // Revoke on the next tick, not synchronously - revoking immediately
+      // can race the browser's download handling of the blob: URL and
+      // silently no-op the download in some cases.
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      exportStatus.textContent = `Downloaded ${entries.length} job${entries.length === 1 ? "" : "s"}.`;
+      setTimeout(() => { exportStatus.textContent = ""; }, 3000);
+    } catch (err) {
+      console.error("CSV export failed:", err);
+      exportStatus.textContent = `Export failed: ${err.message}`;
+    }
+  });
 
   document.getElementById("add-work-history").addEventListener("click", () => {
     currentProfile.workHistory.push({ company: "", title: "", location: "", startDate: "", endDate: "", current: false, description: "" });
@@ -169,5 +209,30 @@ document.addEventListener("DOMContentLoaded", async () => {
     const status = document.getElementById("save-status");
     status.textContent = "Saved.";
     setTimeout(() => { status.textContent = ""; }, 2000);
+  });
+
+  document.getElementById("import-yaml-file").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    const importStatus = document.getElementById("import-status");
+    if (!file) return;
+    importStatus.innerHTML = "Importing...";
+    try {
+      const text = await file.text();
+      const { mapped, warnings } = parseResumeYaml(text);
+      applyImportToProfile(currentProfile, mapped);
+      populateSimpleFields();
+      renderWorkHistory();
+      renderEducation();
+      renderSnippetBank();
+
+      const warningsHtml = warnings.length
+        ? `<ul>${warnings.map((w) => `<li>${escapeHtml(w)}</li>`).join("")}</ul>`
+        : "";
+      importStatus.innerHTML = `<span class="import-ok">Imported ${mapped.workHistory.length} job${mapped.workHistory.length === 1 ? "" : "s"} and ${mapped.education.length} school${mapped.education.length === 1 ? "" : "s"} from "${escapeHtml(file.name)}". Review below, then click "Save profile".</span>${warningsHtml}`;
+    } catch (err) {
+      importStatus.innerHTML = `<span class="import-error">Import failed: ${escapeHtml(err.message)}</span>`;
+    } finally {
+      e.target.value = ""; // allow re-importing the same filename later
+    }
   });
 });

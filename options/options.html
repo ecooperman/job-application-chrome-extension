@@ -13,10 +13,23 @@
     </p>
 
     <section>
+      <h2>Import from resume.yaml</h2>
+      <p class="hint">
+        If you keep your resume as structured YAML (<code>basics</code> / <code>experience</code> / <code>education</code> /
+        <code>certifications</code> / <code>skills</code>), import it here instead of retyping everything. This only
+        overwrites personal info, work history, education, certifications, and skills - your work authorization, EEO
+        answers, preferences, snippet bank, and API key are left alone. Safe to re-run whenever your resume changes.
+      </p>
+      <input type="file" id="import-yaml-file" accept=".yaml,.yml,text/yaml" />
+      <div id="import-status" class="import-status"></div>
+    </section>
+
+    <section>
       <h2>Personal info</h2>
       <div class="grid-2">
         <label>First name<input id="personal.firstName" type="text" /></label>
         <label>Last name<input id="personal.lastName" type="text" /></label>
+        <label>Current job title<input id="personal.currentTitle" type="text" /></label>
         <label>Email<input id="personal.email" type="email" /></label>
         <label>Phone<input id="personal.phone" type="tel" /></label>
         <label>Address line 1<input id="personal.addressLine1" type="text" /></label>
@@ -103,6 +116,18 @@
       <label>Anthropic API key<input id="settings.anthropicApiKey" type="password" placeholder="sk-ant-..." /></label>
     </section>
 
+    <section>
+      <h2>Scored jobs</h2>
+      <p class="hint">
+        Every job "Score this job" / "Score all jobs on this page" has scored, kept locally so re-visiting a job or
+        listing reuses the result instead of re-scoring it (each row has its own "Re-score" button when you do want a
+        fresh one, e.g. after updating your profile).
+      </p>
+      <p><span id="score-count">0</span> job<span id="score-count-plural">s</span> scored so far.</p>
+      <button type="button" id="export-csv-btn" class="secondary-btn">Export as CSV</button>
+      <span id="export-status" class="status"></span>
+    </section>
+
     <div class="save-bar">
       <button type="button" id="save-btn">Save profile</button>
       <span id="save-status" class="status"></span>
@@ -110,6 +135,9 @@
 
     <script src="../lib/profileSchema.js"></script>
     <script src="../lib/storage.js"></script>
+    <script src="../lib/vendor/js-yaml.min.js"></script>
+    <script src="../lib/yamlImport.js"></script>
+    <script src="../lib/scoreCache.js"></script>
     <script src="options.js"></script>
   </body>
 </html>

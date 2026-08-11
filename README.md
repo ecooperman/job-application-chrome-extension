@@ -16,7 +16,8 @@ looking at, so you can review everything before you hit submit yourself.
 3. Click "Load unpacked" and select this folder
 4. Click the extension icon, then "Edit profile & settings" to fill out your
    profile (personal info, work history, education, and a snippet bank of
-   common answers)
+   common answers) - or use the "Import from resume.yaml" button at the top
+   of that page if you keep your resume in that format (see below)
 
 ## Use it
 
@@ -58,6 +59,40 @@ pasted into the options page, with "Enable AI-drafted answers" turned on.
 Each draft costs a small, per-call amount on your Anthropic account. You can
 leave this off and rely purely on the snippet bank instead.
 
+## Importing from resume.yaml
+
+If your resume is a `basics` / `experience` / `education` / `certifications`
+/ `skills` YAML file (the shape used by the `resume` project - see
+`resume.yaml` there), the options page can import it directly instead of
+retyping everything: "Import from resume.yaml" -> pick the file -> review
+the fields it filled in -> "Save profile".
+
+Import only ever touches personal info (name, contact, current title,
+links), work history, education, certifications, and skills - it never
+touches work authorization, EEO answers, salary/notice-period preferences,
+your snippet bank (beyond adding one auto-generated snippet, see below), or
+your API key. Re-running the import later (e.g. after updating your resume)
+overwrites just those resume-derived fields again; everything else is left
+as you set it.
+
+A few notes on the mapping:
+
+- Your resume's `summary` becomes both extra background context for the AI
+  fallback *and* an auto-added snippet-bank entry (tagged "From resume
+  import") that answers generic "tell us about yourself" style questions.
+  Re-importing replaces that one snippet rather than duplicating it; any
+  other snippets you've written by hand are left alone.
+- `certifications` and `skills` don't map to any specific form field, but
+  are included in the background sent to Claude for AI-drafted answers.
+- Name is split on the first space ("First Last...") - if you have a
+  multi-part first or last name, check the result.
+- Location (e.g. "Chicago, IL (Remote)") is parsed for city/state with a
+  simple "City, ST" pattern; anything it can't confidently split out of is
+  left blank rather than guessed, and called out in the import summary.
+- Parsing is done client-side with a vendored copy of
+  [js-yaml](https://github.com/nodeca/js-yaml) (`lib/vendor/`) - nothing
+  about the file leaves your machine.
+
 ## How field matching works
 
 `lib/genericDetectors.js` has a list of regex rules that match a field's
@@ -94,6 +129,11 @@ lib/
   snippetMatch.js       Keyword matching against your snippet bank
   llmClient.js           Content-script side of the AI fallback (messages background.js)
   fillEngine.js           Orchestrates a fill pass end to end
+  yamlImport.js           Parses + maps a resume.yaml import (options page only)
+  vendor/                 Vendored third-party JS (see vendor/README.md)
 ```
+
+(This layout only covers the autofill piece described above - check the
+repo directly for anything added since.)
 
 No build step - it's plain JS, loaded straight into Chrome.
