@@ -69,6 +69,7 @@ function renderScoreResult(result) {
     (g) => `<li>${escapeHtml(g.requirement)}${g.importance === "must-have" ? " <em>(must-have)</em>" : ""}</li>`
   );
   const strengthsHtml = renderRequirementList("Beyond the ask", result.strengths, (s) => `<li>${escapeHtml(s)}</li>`);
+  const salaryHtml = result.salary ? `<div style="margin-top:8px;color:#d1d5db;"><strong>Salary:</strong> ${escapeHtml(result.salary)}</div>` : "";
 
   const scoredDate = result.scoredAt ? new Date(result.scoredAt).toLocaleDateString() : "";
   const cachedHtml = result.cached
@@ -80,6 +81,7 @@ function renderScoreResult(result) {
     <div style="font-weight:600;margin-bottom:6px;">Job Match Score</div>
     <span style="display:inline-block;padding:2px 10px;border-radius:999px;background:${scoreTierColor(result.tier)};font-weight:600;">${escapeHtml(result.tier)}</span>
     <div style="margin-top:8px;color:#d1d5db;">${escapeHtml(result.summary)}</div>
+    ${salaryHtml}
     ${matchedHtml}
     ${gapsHtml}
     ${strengthsHtml}

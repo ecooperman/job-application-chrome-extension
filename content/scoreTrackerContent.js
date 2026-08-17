@@ -76,6 +76,7 @@ function renderTrackerResultRow(entry) {
         <a href="${escapeHtml(entry.url)}" target="_blank" rel="noopener" style="color:#f9fafb;font-weight:600;text-decoration:none;">${escapeHtml(entry.title || "(untitled)")}</a>
         <span style="flex-shrink:0;display:inline-block;padding:1px 8px;border-radius:999px;background:${trackerTierColor(entry.tier)};font-size:11px;font-weight:600;">${escapeHtml(entry.tier)}</span>
       </div>
+      ${entry.salary ? `<div style="color:#9ca3af;">${escapeHtml(entry.salary)}</div>` : ""}
       ${gapHtml}
       ${cachedHtml}
     </div>`;

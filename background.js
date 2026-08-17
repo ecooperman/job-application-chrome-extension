@@ -49,9 +49,14 @@ const SCORE_TOOL = {
         type: "array",
         items: { type: "string" },
         description: "Notable things the candidate has that go beyond what the posting asked for."
+      },
+      salary: {
+        type: "string",
+        description:
+          'The compensation/salary range as stated in the posting - copy it close to verbatim (e.g. "$160,200 - $425,000/yr", "£70k-£85k + bonus"). Empty string if the posting doesn\'t mention pay.'
       }
     },
-    required: ["tier", "summary", "matched", "gaps", "strengths"]
+    required: ["tier", "summary", "matched", "gaps", "strengths", "salary"]
   }
 };
 
@@ -131,6 +136,7 @@ async function scoreMatch(jdText, profileSummary, apiKey) {
     "Then compare those requirements against the candidate's background below.",
     "Only use what's actually stated in the candidate's background - never invent experience, skills, or credentials that aren't there.",
     'If the job description is too vague, truncated, or generic to judge confidently, use the "Unclear" tier rather than forcing a confident answer.',
+    "Also look for a stated compensation/salary range anywhere in the posting and record it - don't invent one if it's not mentioned.",
     "",
     "Candidate background:",
     profileSummary || "(no background provided)",
