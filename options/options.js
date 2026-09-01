@@ -33,6 +33,31 @@ function escapeAttr(s) {
   return escapeHtml(s).replace(/"/g, "&quot;");
 }
 
+function formatBytes(bytes) {
+  if (!bytes) return "0 B";
+  return bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
+}
+
+function formatDateTime(isoString) {
+  if (!isoString) return "";
+  const d = new Date(isoString);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+}
+
+function renderImportMeta() {
+  const el = document.getElementById("import-meta-info");
+  const meta = currentProfile.importMeta || {};
+  if (!meta.lastImportedAt) {
+    el.textContent = "No resume imported yet - the fields below are blank until you import one or fill them in by hand.";
+    el.classList.add("import-meta-empty");
+    return;
+  }
+  el.classList.remove("import-meta-empty");
+  const modifiedPart = meta.fileModifiedAt ? `, file last modified ${formatDateTime(meta.fileModifiedAt)}` : "";
+  el.textContent = `Currently loaded: "${meta.fileName || "unknown file"}" (${formatBytes(meta.fileSizeBytes)})${modifiedPart}, imported into the extension ${formatDateTime(meta.lastImportedAt)}.`;
+}
+
 function populateSimpleFields() {
   for (const id of SIMPLE_FIELD_IDS) {
     const el = document.getElementById(id);
@@ -153,6 +178,7 @@ async function refreshScoreCount() {
 document.addEventListener("DOMContentLoaded", async () => {
   currentProfile = await loadProfile();
   populateSimpleFields();
+  renderImportMeta();
   renderWorkHistory();
   renderEducation();
   renderSnippetBank();
@@ -219,8 +245,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
       const text = await file.text();
       const { mapped, warnings } = parseResumeYaml(text);
-      applyImportToProfile(currentProfile, mapped);
+      applyImportToProfile(currentProfile, mapped, { name: file.name, size: file.size, lastModified: file.lastModified });
       populateSimpleFields();
+      renderImportMeta();
       renderWorkHistory();
       renderEducation();
       renderSnippetBank();

@@ -147,6 +147,20 @@ textarea {
   font-weight: 600;
 }
 
+.import-meta {
+  font-size: 12px;
+  color: #374151;
+  background: #f3f4f6;
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+}
+
+.import-meta.import-meta-empty {
+  color: #9ca3af;
+  font-style: italic;
+}
+
 .import-status {
   font-size: 12px;
   margin-top: 10px;
