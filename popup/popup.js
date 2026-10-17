@@ -46,6 +46,8 @@ const SCORE_TRACKER_SCRIPT_FILES = [
   "content/scoreTrackerContent.js"
 ];
 
+const EXPORT_PROFILE_SCRIPT_FILES = ["lib/banner.js", "lib/linkedinProfile.js", "content/exportProfileContent.js"];
+
 // Kept in sync with isLinkedInJobsListingPage() in lib/linkedinJobsList.js -
 // duplicated here because that file isn't loaded in the popup's own
 // context, only injected into the page.
@@ -70,6 +72,17 @@ function looksLikeLinkedInJobsTracker(url) {
   }
 }
 
+// Kept in sync with isLinkedInProfilePage() in lib/linkedinProfile.js -
+// same reason as above.
+function looksLikeLinkedInProfile(url) {
+  try {
+    const u = new URL(url);
+    return /(^|\.)linkedin\.com$/.test(u.hostname) && /^\/in\/[^/]+\/?$/.test(u.pathname);
+  } catch (e) {
+    return false;
+  }
+}
+
 async function runInActiveTab(files, onDone) {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab || !tab.id) throw new Error("No active tab");
@@ -81,9 +94,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   const fillBtn = document.getElementById("fill-btn");
   const scoreBtn = document.getElementById("score-btn");
   const scoreListingBtn = document.getElementById("score-listing-btn");
+  const exportProfileBtn = document.getElementById("export-profile-btn");
   const optionsLink = document.getElementById("options-link");
   const fillStatus = document.getElementById("fill-status");
   const scoreStatus = document.getElementById("score-status");
+  const exportProfileStatus = document.getElementById("export-profile-status");
 
   optionsLink.addEventListener("click", (e) => {
     e.preventDefault();
@@ -102,6 +117,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   if (scoreListingFiles) {
     scoreListingBtn.classList.remove("hidden");
+  }
+  if (tab && tab.url && looksLikeLinkedInProfile(tab.url)) {
+    exportProfileBtn.classList.remove("hidden");
   }
 
   fillBtn.addEventListener("click", async () => {
@@ -143,6 +161,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (err) {
       scoreStatus.textContent = `Couldn't start scoring: ${err.message}`;
       scoreListingBtn.disabled = false;
+    }
+  });
+
+  exportProfileBtn.addEventListener("click", async () => {
+    exportProfileStatus.textContent = "";
+    exportProfileBtn.disabled = true;
+    try {
+      await runInActiveTab(EXPORT_PROFILE_SCRIPT_FILES, () => {
+        exportProfileStatus.textContent = "Done - check your downloads.";
+        window.setTimeout(() => window.close(), 900);
+      });
+    } catch (err) {
+      exportProfileStatus.textContent = `Couldn't export this page: ${err.message}`;
+      exportProfileBtn.disabled = false;
     }
   });
 });
