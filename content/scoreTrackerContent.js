@@ -22,6 +22,8 @@ var TRACKER_TIER_RANK = { Strong: 0, Good: 1, Possible: 2, Unclear: 3, Weak: 4 }
 // Shared across the initial scoring pass and any later per-row re-score,
 // so both read/write the same list and re-render from the same state.
 var trackerResults = [];
+// True in Send to Jobs mode (lib/jobsApp.js): the panel then says "sent" where it would say "scored".
+var trackerSending = false;
 
 // Between finishing one job and starting the next - keeps this reading as
 // someone working through their list, not a tight loop, and gives each
@@ -35,7 +37,8 @@ function trackerTierColor(tier) {
       Good: "#2563eb",
       Possible: "#d97706",
       Weak: "#dc2626",
-      Unclear: "#6b7280"
+      Unclear: "#6b7280",
+      Sent: "#0891b2"
     }[tier] || "#6b7280"
   );
 }
@@ -59,14 +62,15 @@ function renderTrackerResultRow(entry) {
   }
 
   const topGap = (entry.gaps || []).find((g) => g.importance === "must-have") || (entry.gaps || [])[0];
-  const gapHtml = topGap ? `<div style="color:#d1d5db;margin-top:2px;">Gap: ${escapeHtml(topGap.requirement)}</div>` : "";
+  let gapHtml = topGap ? `<div style="color:#d1d5db;margin-top:2px;">Gap: ${escapeHtml(topGap.requirement)}</div>` : "";
+  if (entry.sent) gapHtml = entry.cached ? "" : `<div style="color:#d1d5db;margin-top:2px;">${escapeHtml(entry.summary)}</div>`;
 
   const scoredDate = entry.scoredAt ? new Date(entry.scoredAt).toLocaleDateString() : "";
   const cachedHtml = entry.cached
     ? `
       <div style="margin-top:2px;color:#9ca3af;">
-        Already scored${scoredDate ? " " + escapeHtml(scoredDate) : ""}
-        <button type="button" data-tracker-rescore-job-id="${escapeHtml(entry.jobId)}" style="margin-left:6px;font-size:11px;padding:2px 8px;border-radius:5px;border:1px solid #374151;background:transparent;color:#9ca3af;cursor:pointer;">Re-score</button>
+        Already ${entry.sent ? "sent" : "scored"}${scoredDate ? " " + escapeHtml(scoredDate) : ""}
+        <button type="button" data-tracker-rescore-job-id="${escapeHtml(entry.jobId)}" style="margin-left:6px;font-size:11px;padding:2px 8px;border-radius:5px;border:1px solid #374151;background:transparent;color:#9ca3af;cursor:pointer;">${entry.sent ? "Send again" : "Re-score"}</button>
       </div>`
     : "";
 
@@ -86,7 +90,7 @@ function wireTrackerRescoreButtons() {
   document.querySelectorAll(`#${TRACKER_PANEL_ID} [data-tracker-rescore-job-id]`).forEach((btn) => {
     btn.addEventListener("click", () => {
       btn.disabled = true;
-      btn.textContent = "Re-scoring…";
+      btn.textContent = trackerSending ? "Sending…" : "Re-scoring…";
       rescoreTrackerOne(btn.getAttribute("data-tracker-rescore-job-id"));
     });
   });
@@ -95,7 +99,9 @@ function wireTrackerRescoreButtons() {
 function renderTrackerPanel(results, progress) {
   const header =
     progress && progress.done < progress.total
-      ? `<div style="color:#9ca3af;">Scoring ${progress.done} of ${progress.total} - opening each job's page in the background…</div>`
+      ? `<div style="color:#9ca3af;">${trackerSending ? "Sending" : "Scoring"} ${progress.done} of ${progress.total} - opening each job's page in the background…</div>`
+      : trackerSending
+      ? `<div style="color:#9ca3af;">${results.length} job${results.length === 1 ? "" : "s"} sent to your Jobs list, which scores them.</div>`
       : `<div style="color:#9ca3af;">${results.length} job${results.length === 1 ? "" : "s"} scored, best match first.</div>`;
 
   const rowsHtml = sortedTrackerResults(results).map(renderTrackerResultRow).join("");
@@ -131,6 +137,12 @@ function renderTrackerError(message) {
 // then persists the result to the score cache. Always hits the API - this
 // is the "not cached, or the user asked to re-score" path.
 async function scoreTrackerJobLive(row, profile) {
+  if (isSendMode(profile)) {
+    // Send to Jobs mode: read the job's own page (background.js opens it) and hand it to the Jobs app, which scores it (lib/jobsApp.js).
+    const page = await jobsAppMessage({ action: "fetchTrackerJob", url: row.url });
+    const sent = await sendJobToJobsApp(profile, { url: row.url, title: page.title, jdText: page.jdText });
+    return setCachedScore(row.url, Object.assign({ jobId: row.jobId }, sent));
+  }
   const profileSummary = buildProfileSummary(profile);
   const response = await chrome.runtime.sendMessage({
     action: "scoreTrackerJob",
@@ -153,6 +165,7 @@ async function rescoreTrackerOne(jobId) {
   let entry;
   try {
     const profile = await loadProfile();
+    trackerSending = isSendMode(profile);
     entry = await scoreTrackerJobLive(row, profile);
   } catch (err) {
     entry = {
@@ -174,7 +187,10 @@ async function runTrackerScore() {
     throw new Error("This only works on a LinkedIn jobs-tracker page.");
   }
   const profile = await loadProfile();
-  if (!profile.settings.anthropicApiKey) {
+  trackerSending = isSendMode(profile);
+  if (trackerSending) {
+    requireJobsAppSettings(profile);
+  } else if (!profile.settings.anthropicApiKey) {
     throw new Error("No Anthropic API key set - add one in the extension options.");
   }
 
@@ -188,7 +204,7 @@ async function runTrackerScore() {
     const row = rows[i];
     let entry;
     try {
-      const cached = await getCachedScore(row.url);
+      const cached = await getCachedFor(row.url, profile);
       if (cached) {
         entry = Object.assign({ jobId: row.jobId }, cached, { cached: true });
       } else {

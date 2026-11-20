@@ -17,6 +17,8 @@ var TIER_RANK = { Strong: 0, Good: 1, Possible: 2, Unclear: 3, Weak: 4 };
 // Shared across the initial scoring pass and any later per-row re-score,
 // so both read/write the same list and re-render from the same state.
 var listingResults = [];
+// True in Send to Jobs mode (lib/jobsApp.js): the panel then says "sent" where it would say "scored".
+var listingSending = false;
 
 function listingTierColor(tier) {
   return (
@@ -25,7 +27,8 @@ function listingTierColor(tier) {
       Good: "#2563eb",
       Possible: "#d97706",
       Weak: "#dc2626",
-      Unclear: "#6b7280"
+      Unclear: "#6b7280",
+      Sent: "#0891b2"
     }[tier] || "#6b7280"
   );
 }
@@ -50,14 +53,15 @@ function renderResultRow(entry) {
   }
 
   const topGap = (entry.gaps || []).find((g) => g.importance === "must-have") || (entry.gaps || [])[0];
-  const gapHtml = topGap ? `<div style="color:#d1d5db;margin-top:2px;">Gap: ${escapeHtml(topGap.requirement)}</div>` : "";
+  let gapHtml = topGap ? `<div style="color:#d1d5db;margin-top:2px;">Gap: ${escapeHtml(topGap.requirement)}</div>` : "";
+  if (entry.sent) gapHtml = entry.cached ? "" : `<div style="color:#d1d5db;margin-top:2px;">${escapeHtml(entry.summary)}</div>`;
 
   const scoredDate = entry.scoredAt ? new Date(entry.scoredAt).toLocaleDateString() : "";
   const cachedHtml = entry.cached
     ? `
       <div style="margin-top:2px;color:#9ca3af;">
-        Already scored${scoredDate ? " " + escapeHtml(scoredDate) : ""}
-        <button type="button" data-rescore-job-id="${escapeHtml(entry.jobId)}" style="margin-left:6px;font-size:11px;padding:2px 8px;border-radius:5px;border:1px solid #374151;background:transparent;color:#9ca3af;cursor:pointer;">Re-score</button>
+        Already ${entry.sent ? "sent" : "scored"}${scoredDate ? " " + escapeHtml(scoredDate) : ""}
+        <button type="button" data-rescore-job-id="${escapeHtml(entry.jobId)}" style="margin-left:6px;font-size:11px;padding:2px 8px;border-radius:5px;border:1px solid #374151;background:transparent;color:#9ca3af;cursor:pointer;">${entry.sent ? "Send again" : "Re-score"}</button>
       </div>`
     : "";
 
@@ -77,7 +81,7 @@ function wireRescoreButtons() {
   document.querySelectorAll(`#${LISTING_PANEL_ID} [data-rescore-job-id]`).forEach((btn) => {
     btn.addEventListener("click", () => {
       btn.disabled = true;
-      btn.textContent = "Re-scoring…";
+      btn.textContent = listingSending ? "Sending…" : "Re-scoring…";
       rescoreOne(btn.getAttribute("data-rescore-job-id"));
     });
   });
@@ -86,7 +90,9 @@ function wireRescoreButtons() {
 function renderListingPanel(results, progress) {
   const header =
     progress && progress.done < progress.total
-      ? `<div style="color:#9ca3af;">Scoring ${progress.done} of ${progress.total}…</div>`
+      ? `<div style="color:#9ca3af;">${listingSending ? "Sending" : "Scoring"} ${progress.done} of ${progress.total}…</div>`
+      : listingSending
+      ? `<div style="color:#9ca3af;">${results.length} job${results.length === 1 ? "" : "s"} sent to your Jobs list, which scores them.</div>`
       : `<div style="color:#9ca3af;">${results.length} job${results.length === 1 ? "" : "s"} scored, best match first.</div>`;
 
   const rowsHtml = sortedResults(results).map(renderResultRow).join("");
@@ -126,6 +132,7 @@ async function rescoreOne(jobId) {
   try {
     if (!card) throw new Error("Couldn't find this job's card on the page anymore - try scrolling near it and re-running.");
     const profile = await loadProfile();
+    listingSending = isSendMode(profile);
     entry = await scoreLinkedInCardLive(card, profile);
   } catch (err) {
     entry = {
@@ -148,7 +155,10 @@ async function runListingScore() {
     throw new Error("This only works on a LinkedIn jobs search/listing page.");
   }
   const profile = await loadProfile();
-  if (!profile.settings.anthropicApiKey) {
+  listingSending = isSendMode(profile);
+  if (listingSending) {
+    requireJobsAppSettings(profile);
+  } else if (!profile.settings.anthropicApiKey) {
     throw new Error("No Anthropic API key set - add one in the extension options.");
   }
 

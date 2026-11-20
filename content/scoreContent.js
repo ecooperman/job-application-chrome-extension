@@ -41,7 +41,7 @@ function wireScoreRescoreButton() {
   if (!btn) return;
   btn.addEventListener("click", () => {
     btn.disabled = true;
-    btn.textContent = "Re-scoring…";
+    btn.textContent = btn.getAttribute("data-busy") || "Re-scoring…";
     loadOrScore(true)
       .then(renderScoreResult)
       .catch((err) => renderScoreResult({ error: err.message }));
@@ -59,6 +59,25 @@ function renderScoreResult(result) {
       SCORE_BANNER_ID
     );
     wireCloseButton(SCORE_BANNER_ID);
+    return;
+  }
+
+  if (result.sent) {
+    const sentDate = result.scoredAt ? new Date(result.scoredAt).toLocaleDateString() : "";
+    const sentAgain = result.cached
+      ? `<div style="margin-top:8px;color:#9ca3af;">Already sent${sentDate ? " " + escapeHtml(sentDate) : ""} <button type="button" id="${SCORE_BANNER_ID}-rescore" data-busy="Sending…" style="margin-left:4px;font-size:11px;padding:2px 8px;border-radius:5px;border:1px solid #374151;background:transparent;color:#9ca3af;cursor:pointer;">Send again</button></div>`
+      : "";
+    showBanner(
+      `
+      <div style="font-weight:600;margin-bottom:6px;">Sent to Jobs</div>
+      ${result.cached ? "" : `<div style="color:#d1d5db;">${escapeHtml(result.summary)}</div>`}
+      ${sentAgain}
+      ${closeButtonHtml(SCORE_BANNER_ID)}
+    `,
+      SCORE_BANNER_ID
+    );
+    wireCloseButton(SCORE_BANNER_ID);
+    wireScoreRescoreButton();
     return;
   }
 
@@ -97,11 +116,17 @@ function renderScoreResult(result) {
 // forceRescore=false checks the cache first (no API key needed for a
 // cache hit); true always calls the API and overwrites the cached entry.
 async function loadOrScore(forceRescore) {
+  const profile = await loadProfile();
   if (!forceRescore) {
-    const cached = await getCachedScore(location.href);
+    const cached = await getCachedFor(location.href, profile);
     if (cached) return Object.assign({}, cached, { cached: true });
   }
-  const profile = await loadProfile();
+  if (isSendMode(profile)) {
+    // Send to Jobs mode: no scoring here, the Jobs app scores what is sent (see lib/jobsApp.js).
+    requireJobsAppSettings(profile);
+    const sent = await sendJobToJobsApp(profile, { url: normalizeJobUrl(location.href), title: document.title, jdText: extractPageJdText() });
+    return setCachedScore(location.href, sent);
+  }
   if (!profile.settings.anthropicApiKey) {
     throw new Error("No Anthropic API key set - add one in the extension options.");
   }

@@ -122,6 +122,36 @@ there.
 Scoring uses the same Anthropic API key as AI-drafted answers above - no
 separate key to set up, and nothing gets scored without one.
 
+### Send to Jobs (the other way to score)
+
+Instead of scoring here, the extension can only **capture** each posting and
+send it to your Jobs app (the resume app's Jobs page), which scores it
+against your resume there with your own Anthropic key and keeps it in your
+list. Nothing to export or import, no Anthropic key needed in this extension
+for scoring, and a long list is scored in the background on the server.
+
+1. On the Jobs page of the resume app press **Connect the Chrome extension**,
+   make a token, and copy it and the address it shows.
+2. In this extension's options, under **Send to Jobs**, paste both, choose
+   "Send to my Jobs app, which scores them", press **Test connection**, then
+   **Save profile**.
+3. "Score this job" / "Score all jobs on this page" become "Send this job to
+   Jobs" / "Send all jobs on this page to Jobs". Pages are read exactly as
+   before; the posting text, title, company and link are what is sent.
+
+Details: `lib/jobsApp.js` (the three entry points call it where they would
+call the Anthropic scorer) and `callJobsApp` in `background.js` (the only
+place that talks to the Jobs app; `credentials: "omit"`, https only except
+for a dev server on this computer). The token only opens the Jobs app's
+`/api/push/...` routes, so it can add jobs to your list and nothing else, and
+removing it on the Jobs page cuts this browser off at once. A job already in
+your list is matched by link and only gets the description, pay or company it
+was missing (its score, notes and "applied" mark are never touched), so
+sending the same job twice is safe. Sent jobs are remembered locally (shown
+as "Already sent", with a "Send again" button) so a list isn't re-opened
+every time; they are not counted or exported as scores, and switching modes
+never strands a job (an entry only counts in the mode that made it).
+
 LinkedIn's markup changes periodically (auto-generated class name suffixes,
 occasional layout redesigns). If "Score all jobs on this page" stops finding
 job cards or rows, `lib/linkedinJobsList.js` (jobs search page) and
@@ -186,7 +216,7 @@ tools.
 
 ```
 manifest.json                 Manifest V3 config
-background.js                 Service worker - the only thing that calls the Anthropic API,
+background.js                 Service worker - the only thing that calls the Anthropic API or the Jobs app,
                                and the only place tabs get opened/activated/closed (tracker scoring)
 popup/                        Toolbar popup - "Fill this page", "Score this job",
                                "Score all jobs on this page" (LinkedIn only), "Edit profile & settings"
@@ -209,6 +239,7 @@ lib/
   banner.js                       Shared on-page banner UI (fill summary, score result, score panels)
   scoreEngine.js                   Builds the job-description text sent for scoring
   scoreCache.js                    Scored-jobs store (chrome.storage.local) + CSV export
+  jobsApp.js                       Send to Jobs mode: capture a posting and hand it to the Jobs app
   linkedinJobsList.js               Card-list traversal for the LinkedIn jobs search page
   linkedinTracker.js                Row-finding for the LinkedIn jobs-tracker page
   yamlImport.js                     Parses + maps a resume.yaml import (options page only)

@@ -19,6 +19,7 @@ const SCORE_SCRIPT_FILES = [
   "lib/banner.js",
   "lib/scoreEngine.js",
   "lib/scoreCache.js",
+  "lib/jobsApp.js",
   "content/scoreContent.js"
 ];
 
@@ -30,6 +31,7 @@ const SCORE_LISTING_SCRIPT_FILES = [
   "lib/banner.js",
   "lib/scoreEngine.js",
   "lib/scoreCache.js",
+  "lib/jobsApp.js",
   "lib/linkedinJobsList.js",
   "content/scoreListingContent.js"
 ];
@@ -42,6 +44,7 @@ const SCORE_TRACKER_SCRIPT_FILES = [
   "lib/banner.js",
   "lib/scoreEngine.js",
   "lib/scoreCache.js",
+  "lib/jobsApp.js",
   "lib/linkedinTracker.js",
   "content/scoreTrackerContent.js"
 ];
@@ -104,6 +107,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     e.preventDefault();
     chrome.runtime.openOptionsPage();
   });
+
+  // In Send to Jobs mode (see lib/jobsApp.js) these buttons send what they read to the Jobs app instead of scoring it here, so say so.
+  try {
+    const { profile } = await chrome.storage.local.get("profile");
+    if (profile && profile.settings && profile.settings.scoreMode === "jobs-app") {
+      scoreBtn.textContent = "Send this job to Jobs";
+      scoreListingBtn.textContent = "Send all jobs on this page to Jobs";
+    }
+  } catch (err) {
+    /* the buttons keep their usual labels */
+  }
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   // Tracker page checked first since /jobs-tracker/ would also need to be

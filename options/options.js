@@ -7,7 +7,8 @@ const SIMPLE_FIELD_IDS = [
   "eeo.gender", "eeo.race", "eeo.hispanicOrLatino", "eeo.veteranStatus", "eeo.disabilityStatus",
   "preferences.desiredSalary", "preferences.noticePeriod", "preferences.earliestStartDate",
   "preferences.willingToRelocate", "preferences.remotePreference",
-  "settings.anthropicApiKey"
+  "settings.anthropicApiKey",
+  "settings.scoreMode", "settings.jobsAppUrl", "settings.jobsAppToken"
 ];
 
 let currentProfile = null;
@@ -168,10 +169,14 @@ function renderSnippetBank() {
   });
 }
 
+// "Sent" entries (Send to Jobs mode) are not scores: the Jobs app holds the score, so they are counted apart and left out of the CSV.
 async function refreshScoreCount() {
-  const entries = await listCachedScores();
+  const all = await listCachedScores();
+  const entries = all.filter((e) => !e.sent);
+  const sent = all.length - entries.length;
   document.getElementById("score-count").textContent = String(entries.length);
   document.getElementById("score-count-plural").textContent = entries.length === 1 ? "" : "s";
+  document.getElementById("sent-count-text").textContent = sent ? ` (and ${sent} sent to your Jobs app)` : "";
   return entries;
 }
 
@@ -211,6 +216,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (err) {
       console.error("CSV export failed:", err);
       exportStatus.textContent = `Export failed: ${err.message}`;
+    }
+  });
+
+  document.getElementById("test-jobs-app-btn").addEventListener("click", async () => {
+    const status = document.getElementById("test-jobs-app-status");
+    status.textContent = "Testing...";
+    try {
+      // Uses what is typed in the boxes now, saved or not.
+      const response = await chrome.runtime.sendMessage({
+        action: "pingJobsApp",
+        url: document.getElementById("settings.jobsAppUrl").value,
+        token: document.getElementById("settings.jobsAppToken").value
+      });
+      status.textContent = response && response.ok ? `Connected: this sends to ${response.result.email}'s Jobs.` : (response && response.error) || "No answer.";
+    } catch (err) {
+      status.textContent = `Couldn't test: ${err.message}`;
     }
   });
 

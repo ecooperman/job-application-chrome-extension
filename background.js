@@ -73,6 +73,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       .catch((err) => sendResponse({ ok: false, error: err.message }));
     return true;
   }
+  if (message.action === "pushToJobs") {
+    callJobsApp(message.url, message.token, "POST", "/api/push/jobs", { jobs: message.postings })
+      .then((result) => sendResponse({ ok: true, result }))
+      .catch((err) => sendResponse({ ok: false, error: err.message }));
+    return true;
+  }
+  if (message.action === "pingJobsApp") {
+    callJobsApp(message.url, message.token, "GET", "/api/push/ping")
+      .then((result) => sendResponse({ ok: true, result }))
+      .catch((err) => sendResponse({ ok: false, error: err.message }));
+    return true;
+  }
+  if (message.action === "fetchTrackerJob") {
+    // Send-to-Jobs mode: just read the job's page (no scoring here), the Jobs app scores it.
+    fetchJobPageContent(message.url)
+      .then((result) => sendResponse({ ok: true, result }))
+      .catch((err) => sendResponse({ ok: false, error: err.message }));
+    return true;
+  }
   if (message.action === "scoreTrackerJob") {
     scoreTrackerJob(message.url, message.profileSummary, message.apiKey)
       .then((result) => sendResponse({ ok: true, result }))
@@ -279,4 +298,51 @@ async function scoreTrackerJob(url, profileSummary, apiKey) {
   const { title, jdText } = await fetchJobPageContent(url);
   const score = await scoreMatch(jdText, profileSummary, apiKey);
   return Object.assign({ title, jdText }, score);
+}
+
+// --- Send to Jobs: the resume app's Jobs page scores what this extension captures ---
+//
+// The Jobs app has one door that takes a personal token instead of a sign-in (POST /api/push/jobs, GET /api/push/ping; made on its Jobs page
+// under "Connect the Chrome extension"). The token only lets this extension add jobs to that person's list. It travels in an Authorization
+// header and never with cookies (credentials: "omit"), and the Jobs app answers CORS for it, so no host permission is needed for the address.
+
+// The address, cleaned up: https only (the token must not travel in the clear), except for a dev server on this computer.
+function jobsAppBase(address) {
+  let u;
+  try {
+    u = new URL((address || "").trim());
+  } catch (e) {
+    throw new Error("The Jobs app address isn't a web address - set it in the extension options.");
+  }
+  const onThisComputer = u.hostname === "localhost" || u.hostname === "127.0.0.1" || u.hostname.endsWith(".localhost");
+  if (u.protocol !== "https:" && !(u.protocol === "http:" && onThisComputer)) {
+    throw new Error("The Jobs app address has to start with https:// (the token must not be sent unprotected).");
+  }
+  return u.origin;
+}
+
+async function callJobsApp(address, token, method, path, body) {
+  if (!token || !token.trim()) throw new Error("No Jobs app token set - make one on the Jobs page and add it in the extension options.");
+  const base = jobsAppBase(address);
+  let res;
+  try {
+    res = await fetch(base + path, {
+      method,
+      credentials: "omit",
+      headers: Object.assign({ authorization: "Bearer " + token.trim() }, body ? { "content-type": "application/json" } : {}),
+      body: body ? JSON.stringify(body) : undefined
+    });
+  } catch (e) {
+    throw new Error(`Couldn't reach the Jobs app at ${base}. Check the address and your connection.`);
+  }
+  let data = null;
+  try {
+    data = await res.json();
+  } catch (e) {
+    /* not JSON: handled below */
+  }
+  if (res.status === 401) throw new Error("The Jobs app didn't accept the token. Make a new one on its Jobs page and paste it in the extension options.");
+  if (!res.ok) throw new Error((data && typeof data.detail === "string" && data.detail) || `The Jobs app answered with an error (${res.status}).`);
+  if (!data) throw new Error("The Jobs app's answer wasn't what was expected - is the address right?");
+  return data;
 }
