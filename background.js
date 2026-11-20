@@ -333,7 +333,7 @@ async function callJobsApp(address, token, method, path, body) {
       body: body ? JSON.stringify(body) : undefined
     });
   } catch (e) {
-    throw new Error(`Couldn't reach the Jobs app at ${base}. Check the address and your connection.`);
+    throw new Error(`Couldn't reach the Jobs app at ${base}. Check the address and your connection. If both look right, wait a few minutes and try again (a change on the server can take a little while to reach everyone); if it keeps failing, tell whoever invited you.`);
   }
   let data = null;
   try {
