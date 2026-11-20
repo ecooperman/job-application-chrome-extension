@@ -181,6 +181,7 @@ async function refreshScoreCount() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  showUpdateBanner(document.getElementById("update-banner"), await pendingUpdate()); // a newer version is out (the Jobs app said so last time)
   currentProfile = await loadProfile();
   populateSimpleFields();
   renderImportMeta();
@@ -230,6 +231,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         token: document.getElementById("settings.jobsAppToken").value
       });
       status.textContent = response && response.ok ? `Connected: this sends to ${response.result.email}'s Jobs.` : (response && response.error) || "No answer.";
+      showUpdateBanner(document.getElementById("update-banner"), await pendingUpdate());
     } catch (err) {
       status.textContent = `Couldn't test: ${err.message}`;
     }

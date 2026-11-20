@@ -329,7 +329,7 @@ async function callJobsApp(address, token, method, path, body) {
     res = await fetch(base + path, {
       method,
       credentials: "omit",
-      headers: Object.assign({ authorization: "Bearer " + token.trim() }, body ? { "content-type": "application/json" } : {}),
+      headers: Object.assign({ authorization: "Bearer " + token.trim(), "x-extension-version": chrome.runtime.getManifest().version }, body ? { "content-type": "application/json" } : {}),
       body: body ? JSON.stringify(body) : undefined
     });
   } catch (e) {
@@ -344,5 +344,13 @@ async function callJobsApp(address, token, method, path, body) {
   if (res.status === 401) throw new Error("The Jobs app didn't accept the token. Make a new one on its Jobs page and paste it in the extension options.");
   if (!res.ok) throw new Error((data && typeof data.detail === "string" && data.detail) || `The Jobs app answered with an error (${res.status}).`);
   if (!data) throw new Error("The Jobs app's answer wasn't what was expected - is the address right?");
+  rememberUpdate(base, data.extension);
   return data;
+}
+
+// The Jobs app says which extension version is newest on its install page with every answer. Keep it, so the popup and options page can say
+// when this one is behind (lib/version.js compares it with the installed version when they open).
+function rememberUpdate(base, info) {
+  if (!info || typeof info.latest !== "string") return;
+  chrome.storage.local.set({ jobsAppUpdate: { latest: info.latest, url: base + (typeof info.page === "string" && info.page.startsWith("/") ? info.page : "/extension.html"), checkedAt: Date.now() } });
 }

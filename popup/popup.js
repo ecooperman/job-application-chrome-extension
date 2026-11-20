@@ -108,6 +108,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     chrome.runtime.openOptionsPage();
   });
 
+  // A newer version is out (the Jobs app said so the last time this extension talked to it).
+  showUpdateBanner(document.getElementById("update-banner"), await pendingUpdate());
+
   // In Send to Jobs mode (see lib/jobsApp.js) these buttons send what they read to the Jobs app instead of scoring it here, so say so.
   try {
     const { profile } = await chrome.storage.local.get("profile");

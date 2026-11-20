@@ -72,3 +72,18 @@ button.secondary:hover:not(:disabled) {
 #options-link:hover {
   text-decoration: underline;
 }
+
+.update-banner {
+  font-size: 12px;
+  line-height: 1.4;
+  background: #fef3c7;
+  color: #78350f;
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin: 0 0 12px;
+}
+
+.update-banner a {
+  color: inherit;
+  font-weight: 600;
+}
