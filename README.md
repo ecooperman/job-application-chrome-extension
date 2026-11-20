@@ -203,17 +203,23 @@ scanning to the actual application form and avoid touching the rest of the
 page. If you run into a site where matching doesn't work well, both files
 are short and meant to be extended.
 
-## Packaging a release
+## Releasing a new version
 
-`package.py` builds `job-scoring-extension-<version>.zip` (the version comes from `manifest.json`) from the files git tracks, with `manifest.json` at the top
-level, the same bytes every time, and refuses to run with uncommitted changes to tracked files. The resume app's install page serves the newest zip it finds in
-its `extension/` folder, so a release is: bump the version, commit and push here, then
+1. Change `"version"` in `manifest.json` (a higher number than the last release: 0.3.1, then 0.3.2 ...), commit, and push this repo.
+2. Run **one command**:
 
 ```
-python3 package.py --to ~/code/personal-projects/resume/extension
+python3 release.py
 ```
 
-(it removes the older zip there) and commit and push the resume repo.
+It checks that everything here is committed (an untracked file you forgot would be missing from the zip), that the version moved forward, builds
+`job-scoring-extension-<version>.zip` into the resume repo's `extension/` folder with `package.py` (removing the older zip), opens the zip to check its manifest and
+file list, runs the resume repo's extension tests, and prints the commit block for the resume repo. It never commits or pushes by itself. Paste the block it prints.
+The resume app's install page serves the newest zip in that folder, and its update notice compares versions from the zip's name. `--resume <path>` points at the
+resume repo if it is not at `../../resume`; `--no-tests` skips the tests.
+
+`package.py` alone (`python3 package.py --to <folder>`) only builds the zip: the same bytes every time, from the files git tracks, `manifest.json` at the top level.
+A released version must never change: if you need to fix something, bump the version again.
 
 ## Data storage
 

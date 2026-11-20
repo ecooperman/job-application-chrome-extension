@@ -20,7 +20,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 NAME = "job-scoring-extension"
-LEFT_OUT = {"package.py", ".gitignore"}  # build tooling, not part of the extension
+LEFT_OUT = {"package.py", "release.py", ".gitignore"}  # build tooling, not part of the extension
 
 
 def git(*args: str) -> str:
