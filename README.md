@@ -203,6 +203,18 @@ scanning to the actual application form and avoid touching the rest of the
 page. If you run into a site where matching doesn't work well, both files
 are short and meant to be extended.
 
+## Packaging a release
+
+`package.py` builds `job-scoring-extension-<version>.zip` (the version comes from `manifest.json`) from the files git tracks, with `manifest.json` at the top
+level, the same bytes every time, and refuses to run with uncommitted changes to tracked files. The resume app's install page serves the newest zip it finds in
+its `extension/` folder, so a release is: bump the version, commit and push here, then
+
+```
+python3 package.py --to ~/code/personal-projects/resume/extension
+```
+
+(it removes the older zip there) and commit and push the resume repo.
+
 ## Data storage
 
 Your profile (including the API key, if you add one) and your scored-jobs
