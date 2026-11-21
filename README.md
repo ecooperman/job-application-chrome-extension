@@ -202,6 +202,12 @@ scanning to the actual application form and avoid touching the rest of the
 page. If you run into a site where matching doesn't work well, both files
 are short and meant to be extended.
 
+## Default mode
+
+A fresh install defaults to **Send to Jobs** (`settings.scoreMode: "jobs-app"` in `lib/profileSchema.js`): collecting jobs is the main purpose, and it spares a new person
+switching the mode before the buttons say "Send". A profile that has already saved a mode keeps it, whichever it is; one saved before the mode existed (no `scoreMode` field) picks up the
+new default. The popup reads the profile through `loadProfile()` (merged with the defaults), never raw from storage, so a fresh install with nothing saved yet shows the right wording.
+
 ## Icon
 
 `icons/` holds the brass-gears logo the whole suite uses (the same one as every app's tab icon, `shared-assets/static`), as the four PNG sizes Chrome wants (16, 32, 48, 128). The two small ones
