@@ -108,6 +108,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     chrome.runtime.openOptionsPage();
   });
 
+  // Feedback goes to the Jobs app's own Send feedback page (at the address set in the options, the default one otherwise).
+  document.getElementById("feedback-link").addEventListener("click", async (e) => {
+    e.preventDefault();
+    let base = "https://jobs.evancooperman.com";
+    try {
+      const profile = await loadProfile();
+      if (profile.settings.jobsAppUrl) base = profile.settings.jobsAppUrl;
+    } catch (err) {
+      /* the default address */
+    }
+    chrome.tabs.create({ url: `${base.replace(/\/+$/, "")}/contact.html` });
+  });
+
   // A newer version is out (the Jobs app said so the last time this extension talked to it).
   showUpdateBanner(document.getElementById("update-banner"), await pendingUpdate());
 

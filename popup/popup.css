@@ -61,7 +61,8 @@ button.secondary:hover:not(:disabled) {
   margin: 10px 0 4px;
 }
 
-#options-link {
+#options-link,
+#feedback-link {
   display: block;
   margin-top: 8px;
   font-size: 12px;
@@ -69,7 +70,8 @@ button.secondary:hover:not(:disabled) {
   text-decoration: none;
 }
 
-#options-link:hover {
+#options-link:hover,
+#feedback-link:hover {
   text-decoration: underline;
 }
 
