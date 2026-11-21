@@ -1,13 +1,12 @@
 # Jobs (the Chrome extension)
 
-A small Chrome extension that fills in job application forms from a profile
-you fill out once - name, contact info, work history, EEO answers, and a
-bank of pre-written answers to common custom questions ("why do you want to
-work here?", etc). For questions that don't match anything in the bank, it
-can optionally ask Claude to draft an answer from your work history. It can
-also score a job posting - or every posting in a LinkedIn list - against
-that same profile, so you can triage postings before spending time on them
-(see "Scoring job postings" below).
+A small Chrome extension for your job search. Its main purpose is to **collect job postings**: press one button on a posting (or on a LinkedIn
+results or saved-jobs list) and it is sent to your Jobs list in the Jobs app, where it is scored against your resume and kept (see "Send to Jobs"
+below). It can still score postings itself with your own Anthropic key (the original way, "Scoring job postings" below).
+
+Secondarily, it can fill in job application forms from a profile you fill out once - name, contact info, work history, EEO answers, and a
+bank of pre-written answers to common custom questions ("why do you want to work here?", etc). For questions that don't match anything in the
+bank, it can optionally ask Claude to draft an answer from your work history.
 
 It never submits an application. Filling only ever touches fields on the
 page you're already looking at, so you can review everything before you hit

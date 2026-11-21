@@ -114,9 +114,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   // In Send to Jobs mode (see lib/jobsApp.js) these buttons send what they read to the Jobs app instead of scoring it here, so say so.
   try {
     const { profile } = await chrome.storage.local.get("profile");
-    if (profile && profile.settings && profile.settings.scoreMode === "jobs-app") {
-      scoreBtn.textContent = "Send this job to Jobs";
-      scoreListingBtn.textContent = "Send all jobs on this page to Jobs";
+    if (!(profile && profile.settings && profile.settings.scoreMode === "jobs-app")) {
+      // The original way: score here with an Anthropic key (the buttons and the hint above them are written for sending to the Jobs app).
+      scoreBtn.textContent = "Score this job";
+      scoreListingBtn.textContent = "Score all jobs on this page";
+      document.getElementById("jobs-hint").textContent = "Reads the job posting on this page and scores how well it fits your saved profile, here in the extension.";
     }
   } catch (err) {
     /* the buttons keep their usual labels */

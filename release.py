@@ -162,8 +162,11 @@ def main() -> int:
     # 6. what to commit over there
     pending = changed_files(resume)
     elsewhere = [path for path in pending if not path.startswith("extension/")]
-    if not changed and not pending:
-        print("\nNothing to commit: the resume repo already has this release.")
+    release_pending = [path for path in pending if path.startswith("extension/")]
+    if not changed and not release_pending:
+        print("\nNothing to commit for the release: the resume repo already has this zip.")
+        if elsewhere:
+            print("Note: the resume repo has other uncommitted changes (not part of the release; commit them yourself if they belong with it):\n  " + "\n  ".join(elsewhere))
         return 0
     subject = git(HERE, "log", "-1", "--format=%s").strip()
     sha = git(HERE, "rev-parse", "--short", "HEAD").strip()

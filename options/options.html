@@ -8,9 +8,48 @@
   <body>
     <h1>Jobs</h1>
     <p class="hint">
-      This is your template - what gets copied into application fields. Everything is stored only in this browser
-      (<code>chrome.storage.local</code>), never sent anywhere except the optional AI drafting call to Anthropic below.
+      Your settings. Everything is stored only in this browser (<code>chrome.storage.local</code>) and is never sent anywhere except
+      what you choose to send: job postings to your Jobs app (the first section below), or, if you add an Anthropic key, text to
+      Anthropic for the optional AI scoring and drafting.
     </p>
+
+    <section>
+      <h2>Send to Jobs</h2>
+      <div id="update-banner" class="update-banner hidden" role="status"></div>
+      <p class="hint">
+        Instead of scoring here with your own Anthropic key, this extension can just read each posting and send it to your
+        Jobs app (the Jobs page of the resume app), which scores it against your resume there and keeps it in your list - nothing
+        to export or import, and no Anthropic key needed in this extension. On the Jobs page, press
+        <em>Connect the Chrome extension</em>, make a token, and paste it and the address it shows below. The token only lets
+        this extension add jobs to your list. Pages are read exactly as before; only the posting text, title and link are sent.
+      </p>
+      <label>What "Score this job" and "Score all jobs on this page" do
+        <select id="settings.scoreMode">
+          <option value="local">Score here, with my Anthropic key (the original way)</option>
+          <option value="jobs-app">Send to my Jobs app, which scores them</option>
+        </select>
+      </label>
+      <div class="grid-2">
+        <label>Jobs app address<input id="settings.jobsAppUrl" type="url" placeholder="https://jobs.evancooperman.com" /></label>
+        <label>Jobs app token<input id="settings.jobsAppToken" type="password" placeholder="rjt_..." autocomplete="off" /></label>
+      </div>
+      <button type="button" id="test-jobs-app-btn" class="secondary-btn">Test connection</button>
+      <span id="test-jobs-app-status" class="status"></span>
+    </section>
+
+    <section>
+      <h2>Scored jobs</h2>
+      <p class="hint">
+        Every job "Score this job" / "Score all jobs on this page" has scored, kept locally so re-visiting a job or
+        listing reuses the result instead of re-scoring it (each row has its own "Re-score" button when you do want a
+        fresh one, e.g. after updating your profile).
+      </p>
+      <p><span id="score-count">0</span> job<span id="score-count-plural">s</span> scored so far<span id="sent-count-text"></span>.</p>
+      <button type="button" id="export-csv-btn" class="secondary-btn">Export as CSV</button>
+      <span id="export-status" class="status"></span>
+    </section>
+
+    <h2 class="group-heading">Filling in job applications <span class="hint">(optional: the rest of this page is the profile it fills from)</span></h2>
 
     <section>
       <h2>Import from resume.yaml</h2>
@@ -115,42 +154,6 @@
         Enable AI-drafted answers for unmatched questions
       </label>
       <label>Anthropic API key<input id="settings.anthropicApiKey" type="password" placeholder="sk-ant-..." /></label>
-    </section>
-
-    <section>
-      <h2>Send to Jobs</h2>
-      <div id="update-banner" class="update-banner hidden" role="status"></div>
-      <p class="hint">
-        Instead of scoring here with your own Anthropic key, this extension can just read each posting and send it to your
-        Jobs app (the Jobs page of the resume app), which scores it against your resume there and keeps it in your list - nothing
-        to export or import, and no Anthropic key needed in this extension. On the Jobs page, press
-        <em>Connect the Chrome extension</em>, make a token, and paste it and the address it shows below. The token only lets
-        this extension add jobs to your list. Pages are read exactly as before; only the posting text, title and link are sent.
-      </p>
-      <label>What "Score this job" and "Score all jobs on this page" do
-        <select id="settings.scoreMode">
-          <option value="local">Score here, with my Anthropic key (the original way)</option>
-          <option value="jobs-app">Send to my Jobs app, which scores them</option>
-        </select>
-      </label>
-      <div class="grid-2">
-        <label>Jobs app address<input id="settings.jobsAppUrl" type="url" placeholder="https://jobs.evancooperman.com" /></label>
-        <label>Jobs app token<input id="settings.jobsAppToken" type="password" placeholder="rjt_..." autocomplete="off" /></label>
-      </div>
-      <button type="button" id="test-jobs-app-btn" class="secondary-btn">Test connection</button>
-      <span id="test-jobs-app-status" class="status"></span>
-    </section>
-
-    <section>
-      <h2>Scored jobs</h2>
-      <p class="hint">
-        Every job "Score this job" / "Score all jobs on this page" has scored, kept locally so re-visiting a job or
-        listing reuses the result instead of re-scoring it (each row has its own "Re-score" button when you do want a
-        fresh one, e.g. after updating your profile).
-      </p>
-      <p><span id="score-count">0</span> job<span id="score-count-plural">s</span> scored so far<span id="sent-count-text"></span>.</p>
-      <button type="button" id="export-csv-btn" class="secondary-btn">Export as CSV</button>
-      <span id="export-status" class="status"></span>
     </section>
 
     <div class="save-bar">

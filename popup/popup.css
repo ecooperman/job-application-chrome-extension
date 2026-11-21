@@ -87,3 +87,9 @@ button.secondary:hover:not(:disabled) {
   color: inherit;
   font-weight: 600;
 }
+
+.section-gap {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #e5e7eb;
+}
