@@ -203,6 +203,12 @@ scanning to the actual application form and avoid touching the rest of the
 page. If you run into a site where matching doesn't work well, both files
 are short and meant to be extended.
 
+## Icon
+
+`icons/` holds the brass-gears logo the whole suite uses (the same one as every app's tab icon, `shared-assets/static`), as the four PNG sizes Chrome wants (16, 32, 48, 128). The two small ones
+come from `favicon.png` (drawn for small sizes) and the two large ones from `logo-email.png`. Chrome shows it on the toolbar button and on the extension's card at `chrome://extensions`. If the logo
+ever changes, remake them with `sips -z <size> <size> <source> --out icons/icon-<size>.png` and bump the version.
+
 ## Releasing a new version
 
 1. Change `"version"` in `manifest.json` (a higher number than the last release: 0.3.1, then 0.3.2 ...), commit, and push this repo.
