@@ -9,7 +9,7 @@
 function renderSummaryBanner(summary) {
   if (summary.error) {
     showBanner(`
-      <div style="font-weight:600;margin-bottom:4px;">Job Application Autofill</div>
+      <div style="font-weight:600;margin-bottom:4px;">Jobs</div>
       <div>Something went wrong: ${escapeHtml(summary.error)}</div>
       ${closeButtonHtml()}
     `);
@@ -43,7 +43,7 @@ function renderSummaryBanner(summary) {
     : "";
 
   showBanner(`
-    <div style="font-weight:600;margin-bottom:6px;">Job Application Autofill</div>
+    <div style="font-weight:600;margin-bottom:6px;">Jobs</div>
     ${rowsHtml}
     ${skippedHtml}
     <div style="margin-top:10px;padding-top:8px;border-top:1px solid #374151;color:#fbbf24;font-weight:600;">
@@ -55,7 +55,7 @@ function renderSummaryBanner(summary) {
 }
 
 showBanner(`
-  <div style="font-weight:600;">Job Application Autofill</div>
+  <div style="font-weight:600;">Jobs</div>
   <div style="margin-top:4px;color:#9ca3af;">Filling in the page…</div>
 `);
 

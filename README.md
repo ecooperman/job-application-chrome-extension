@@ -1,4 +1,4 @@
-# Job Application Autofill
+# Jobs (the Chrome extension)
 
 A small Chrome extension that fills in job application forms from a profile
 you fill out once - name, contact info, work history, EEO answers, and a

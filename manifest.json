@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Job Application Autofill",
-  "version": "0.3.3",
-  "description": "Fills job application forms from your saved profile. Never submits anything for you.",
+  "name": "Jobs",
+  "version": "0.3.4",
+  "description": "Sends job postings to your Jobs list to be scored, and fills job application forms from your saved profile. Never submits anything for you.",
   "permissions": ["storage", "activeTab", "scripting", "tabs"],
   "host_permissions": ["https://api.anthropic.com/*", "https://www.linkedin.com/*"],
   "background": {
